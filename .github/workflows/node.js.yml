@@ -1,4 +1,4 @@
-name: Deploy Node.js App to Netlify
+name: Deploy
 
 on:
   push:
@@ -6,31 +6,40 @@ on:
       - main
 
 jobs:
-  build:
+  build_and_deploy_frontend:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '16'
+      - name: Install dependencies and build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+      
+      - name: Deploy frontend to Netlify
+        uses: netlify/actions/cli@v1
+        with:
+          args: deploy --prod --dir=frontend/build --message="Automated deployment from GitHub Actions"
+        env:
+          NETLIFY_AUTH_TOKEN: nfp_ayZDesQ4pEqnbXmGKHjBU5FxfUD66qhRc217
+          NETLIFY_SITE_ID: aeda29eb-285a-493e-8bff-8a9be8cf422e
 
-    - name: Install dependencies
-      run: npm install
+  deploy_backend:
+    runs-on: ubuntu-latest
+    needs: build_and_deploy_frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Deploy backend to local server
+        run: |
+          cd backend
+          cp -r . /home/$USERS
 
-    - name: Run tests
-      run: npm test
-
-    - name: Build project
-      run: npm run build
-
-    - name: Deploy to Netlify
-      env:
-        NETLIFY_AUTH_TOKEN: nfp_ayZDesQ4pEqnbXmGKHjBU5FxfUD66qhRc217
-        NETLIFY_SITE_ID: aeda29eb-285a-493e-8bff-8a9be8cf422e
-      run: |
-        npm install -g netlify-cli
-        netlify deploy --prod --dir=build --auth=$NETLIFY_AUTH_TOKEN --site=$NETLIFY_SITE_ID
