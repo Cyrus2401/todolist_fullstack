@@ -1,0 +1,36 @@
+name: Deploy Node.js App to Netlify
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run tests
+      run: npm test
+
+    - name: Build project
+      run: npm run build
+
+    - name: Deploy to Netlify
+      env:
+        NETLIFY_AUTH_TOKEN: nfp_ayZDesQ4pEqnbXmGKHjBU5FxfUD66qhRc217
+        NETLIFY_SITE_ID: aeda29eb-285a-493e-8bff-8a9be8cf422e
+      run: |
+        npm install -g netlify-cli
+        netlify deploy --prod --dir=build --auth=$NETLIFY_AUTH_TOKEN --site=$NETLIFY_SITE_ID
